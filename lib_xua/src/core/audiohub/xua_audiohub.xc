@@ -16,6 +16,7 @@
 #include <xs1_su.h>
 #include <string.h>
 #include <xassert.h>
+#include <xscope.h>
 
 
 #include "xua.h"
@@ -178,6 +179,8 @@ unsigned static AudioHub_MainLoop(chanend ?c_out, chanend ?c_spd_out
     buffered in port:32  (&?p_i2s_adc)[I2S_WIRES_ADC]
 )
 {
+    xscope_int(1, 5);
+
     /* Since DAC and ADC buffered ports off by one sample we buffer previous ADC frame */
     unsigned readBuffNo = 0;
     unsigned index;
@@ -248,6 +251,8 @@ unsigned static AudioHub_MainLoop(chanend ?c_out, chanend ?c_spd_out
     }
 
     /* Main Audio I/O loop */
+
+    xscope_int(1, 6);
     while (1)
     {
         unsigned syncError = 0;
@@ -400,11 +405,13 @@ unsigned static AudioHub_MainLoop(chanend ?c_out, chanend ?c_spd_out
 #if (XUA_NUM_PDM_MICS > 0)
                 if ((AUD_TO_MICS_RATIO - 1) == audioToMicsRatioCounter)
                 unsafe {
+                    // xscope_int(1, 7);
                     chanend_t c_m2a = (chanend_t)c_pdm_pcm;
                     int32_t *mic_samps_base_addr = (int32_t*)&samplesIn[readBuffNo][PDM_MIC_INDEX];
                     ma_frame_rx(mic_samps_base_addr, c_m2a, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME, MIC_ARRAY_CONFIG_MIC_COUNT);
                     user_pdm_process(mic_samps_base_addr);
                     audioToMicsRatioCounter = 0;
+                    // xscope_int(1, 8);
                 }
                 else
                 {
@@ -515,10 +522,13 @@ unsigned static AudioHub_MainLoop(chanend ?c_out, chanend ?c_spd_out
                     /* Do samples transfer */
                     /* The below looks a bit odd but forces the compiler to inline twice */
                     unsigned command;
+                    xscope_int(1, 7);
                     if(readBuffNo)
                         command = DoSampleTransfer(c_out, 1, underflowWord);
                     else
                         command = DoSampleTransfer(c_out, 0, underflowWord);
+
+                    xscope_int(1, 8);
 
                     if(command)
                     {
@@ -651,6 +661,7 @@ void XUA_AudioHub(chanend ?c_aud, clock ?clk_audio_mclk, clock ?clk_audio_bclk,
     unsigned divide;
     unsigned firstRun = 1;
 
+
     /* Clock master clock-block from master-clock port */
     /* Note, marked unsafe since other cores may be using this mclk port */
     configure_clock_src(clk_audio_mclk, p_mclk_in);
@@ -673,8 +684,12 @@ void XUA_AudioHub(chanend ?c_aud, clock ?clk_audio_mclk, clock ?clk_audio_bclk,
     start_clock(clk_audio_mclk);
 
     /* Perform required CODEC/ADC/DAC initialisation */
+
+
     AudioHwInit();
 
+    xscope_int(1, 0);
+    xscope_int(1, 1);
     while(1)
     {
         /* Calculate what master clock we should be using */
@@ -844,11 +859,31 @@ void XUA_AudioHub(chanend ?c_aud, clock ?clk_audio_mclk, clock ?clk_audio_bclk,
                 outuint(c_spdif_out, mClk);
 #endif
 
+                xscope_int(1, 2);
+
 #if (XUA_NUM_PDM_MICS > 0)
-                /* Send decimation factor to PDM task(s) */
+                /* Send mic sample rate to PDM task and synch */
                 user_pdm_init();
                 c_pdm_in <: curSamFreq / AUD_TO_MICS_RATIO;
+                // delay_milliseconds(1);
+
+                // while(1){
+                unsafe {
+                    chanend_t c_m2a = (chanend_t)c_pdm_in;
+                    int32_t mics_dummy[MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME][MIC_ARRAY_CONFIG_MIC_COUNT];
+                    ma_frame_rx(mics_dummy[0], c_m2a, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME, MIC_ARRAY_CONFIG_MIC_COUNT);
+                }
+                // delay_milliseconds(1);
+                xscope_int(1, 3);
+                // }
+                /* Now wait at least one mic sample period to esnure that
+                   we are not blocked when reading PDM samplesin the main loop
+                   which would push out I2S timing */
+                const int wait_ticks = XS1_TIMER_HZ / curSamFreq;
+                // delay_ticks(wait_ticks);
 #endif
+                xscope_int(1, 4);
+
 
 #if (XUA_ADAT_TX_EN)
                 // Configure ADAT parameters ...

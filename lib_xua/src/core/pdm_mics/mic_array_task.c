@@ -9,6 +9,8 @@
 #include "mic_array.h"
 
 #include <xcore/channel.h>
+#include <xcore/hwtimer.h>
+#include <xscope.h>
 
 
 #define CLRSR(c)                asm volatile("clrsr %0" : : "n"(c));
@@ -16,8 +18,11 @@
 
 #include <print.h>
 
+void call_xscope_int(int p, int v){xscope_int(p, v);}
+
 void mic_array_task(chanend_t c_mic_to_audio){
     unsigned mic_samp_rate = chan_in_word(c_mic_to_audio);
+    xscope_int(0, 10);
     ma_init(mic_samp_rate);
     /*
      * ma_task() itself uses interrupts, and does re-enable them. However,
@@ -27,6 +32,7 @@ void mic_array_task(chanend_t c_mic_to_audio){
     CLEAR_KEDI()
 
     /* Start endless loop */
+    xscope_int(0, 11);
     ma_task(c_mic_to_audio);
 }
 

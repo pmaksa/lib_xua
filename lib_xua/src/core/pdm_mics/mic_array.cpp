@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <print.h>
+#include <xscope.h>
 #include <xcore/channel_streaming.h>
 #include <xcore/interrupt.h>
 
@@ -199,6 +200,9 @@ using TMicArray = mic_array::MicArray<mic_count,
 
 TMicArray mics;
 
+extern"C"{
+    void call_xscope_int(int, int);
+}
 
 void ma_init(unsigned mic_samp_rate)
 {
@@ -221,6 +225,7 @@ void ma_task(chanend_t c_frames_out)
   mics.PdmRx.InstallISR();
   mics.PdmRx.UnmaskISR();
 
+  call_xscope_int(0, 12);
   mics.ThreadEntry();
 }
 

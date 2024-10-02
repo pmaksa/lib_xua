@@ -1,2 +1,5 @@
 <xSCOPEconfig ioMode="basic" enabled="true">
+    <Probe name="MA" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
+    <Probe name="IO" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
+    <Probe name="DECOUPLE" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
 </xSCOPEconfig>

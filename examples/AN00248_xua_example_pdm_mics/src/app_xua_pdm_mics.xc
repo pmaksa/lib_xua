@@ -51,7 +51,7 @@ on tile[0]: port p_sda = XS1_PORT_1M;
 
 void UserBufferManagementInit(unsigned sampFreq)
 {
-    printintln(sampFreq);
+    // printintln(sampFreq);
 }
 
 /* Make a copy of inbound mic samples and send to DAC */
@@ -67,6 +67,7 @@ void UserBufferManagement(unsigned sampsFromUsbToAudio[], unsigned sampsFromAudi
     // printint(cls(sampsFromUsbToAudio[0]));
     // printchar('\t');
     // printintln(cls(sampsFromUsbToAudio[1]));
+    static int c = 0; if(c++ == 1000){c = 0; printcharln('.');}
 }
 
 #pragma unsafe arrays
@@ -74,7 +75,7 @@ void user_pdm_process(int32_t mic_audio[MIC_ARRAY_CONFIG_MIC_COUNT])
 {
     for(int i = 0; i < XUA_NUM_PDM_MICS; i++)
     {
-        // Apply some gain (non-saturating - will overflow)
+        // Apply some simple gain (non-saturating - will overflow)
         mic_audio[i] = mic_audio[i] << 6;
     }
 }
@@ -136,6 +137,7 @@ int main()
             {
                 /* AudioHub/IO core does most of the audio IO i.e. I2S (also serves as a hub for all audio including mics) */
                 XUA_AudioHub(c_aud, clk_audio_mclk, clk_audio_bclk, p_mclk_in, p_lrclk, p_bclk, p_i2s_dac, null, c_mic_pcm);
+                // XUA_AudioHub(c_aud, clk_audio_mclk, clk_audio_bclk, p_mclk_in, p_lrclk, p_bclk, p_i2s_dac, null);
 
                 /* Microphone task */
                 mic_array_task(c_mic_pcm);

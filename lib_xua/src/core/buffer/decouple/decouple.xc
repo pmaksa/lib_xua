@@ -7,6 +7,7 @@
 
 #if XUA_USB_EN
 #include <xs1.h>
+#include <xscope.h>
 #include "xc_ptr.h"
 #include "interrupt.h"
 #include "xua_commands.h"
@@ -223,6 +224,7 @@ static inline void SendSamples4(chanend c_mix_out)
 #pragma unsafe arrays
 void handle_audio_request(chanend c_mix_out)
 {
+    xscope_int(2, 0);
 #if(defined XUA_USB_DESCRIPTOR_OVERWRITE_RATE_RES)
     g_curSubSlot_Out = get_usb_to_device_bit_res() >> 3;
     g_curSubSlot_In = get_device_to_usb_bit_res() >> 3;
@@ -512,6 +514,8 @@ __builtin_unreachable();
 
         sampsToWrite--;
     }
+        xscope_int(2, 1);
+
 
     {
         /* Finished creating packet - commit it to the FIFO */
@@ -607,7 +611,10 @@ __builtin_unreachable();
 
                     assert(rdPtr < aud_to_host_fifo_end && msg("rdPtr must be within buffer"));
 
+                xscope_int(2, 3);
+
                 } while (fillLevel > 2 * max_pkt_size);
+                // } while (fillLevel > BUFF_SIZE_IN - spaceRequired * 2);
 
                 SET_SHARED_GLOBAL(g_aud_to_host_rdptr, rdPtr);
             }
@@ -616,6 +623,8 @@ __builtin_unreachable();
             sampsToWrite = totalSampsToWrite;
         }
     }
+
+    xscope_int(2, 4);
 
     if (!outUnderflow && (aud_data_remaining_to_device<(g_curSubSlot_Out * g_numUsbChan_Out)))
     {

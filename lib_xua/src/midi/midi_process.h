@@ -5,7 +5,10 @@
 extern "C" {
 #endif
 
+#include <xccompat.h>
+
 void MidiProcess_UsbFromHost(unsigned midiData[], unsigned size);
+void usb_midi_process(chanend c_midi, unsigned cable_number);
 
 #ifdef __XC__
 }

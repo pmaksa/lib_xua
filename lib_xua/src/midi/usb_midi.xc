@@ -52,8 +52,8 @@ timer iAPTimer;
 #endif
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-
-void usb_midi(
+extern int __usb_midi_process_overloaded__;
+void  usb_midi(
 #if (MIDI_RX_PORT_WIDTH == 4)
     buffered in port:4 ?p_midi_in,
 #else
@@ -69,6 +69,11 @@ void usb_midi(
 #endif
 )
 {
+    usb_midi_process(c_midi, cable_number);
+    if (__usb_midi_process_overloaded__)
+    {
+        return;
+    }   
     unsigned symbol = 0x0; // Symbol in progress of being sent out
     unsigned isTX = 0; // Guard when outputting data
     unsigned txT; // Timer value used for outputting

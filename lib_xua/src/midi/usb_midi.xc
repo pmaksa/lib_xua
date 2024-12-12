@@ -319,7 +319,6 @@ void  usb_midi(
                 }
 #else
                 {midi[0], midi[1], midi[2], size} = midi_out_parse(event);
-                MidiProcess_UsbFromHost(midi, size);
                 for (int i = 0; i != size; i++)
                 {
                     // add symbol to fifo
